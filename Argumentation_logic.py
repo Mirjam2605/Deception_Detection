@@ -2,8 +2,8 @@ import yaml
 import ttg
 from itertools import chain, combinations
 import networkx as nx
-import matplotlib.pyplot as plt
-from Argumentation_Builder import ArgumentationFramework
+
+
 
 # Load your YAML data (replace 'your_yaml_file.yaml' with your actual file)
 def load_yaml(file_path):
@@ -39,9 +39,6 @@ def create_arguments(file):
 
     # build truth table
     truth_table = ttg.Truths(atoms, prop_expr, ints=False).as_pandas 
-    print("Truth-Table:")
-    print(truth_table)
-    print()
 
     #check truth for statement combinations
     support_candidates = []
@@ -51,9 +48,6 @@ def create_arguments(file):
             if b:
                 support_candidates.append(statements) 
                 break
-    print("support_candidates:")
-    print(*support_candidates,sep='\n')  
-    print()
 
     # 2. conclusion entailment
 
@@ -80,15 +74,9 @@ def create_arguments(file):
         for element in support:          
                 argument = [support, element]
                 argument_candidates.append(argument)
-    print("argument candidates:")   
-    print(*argument_candidates,sep='\n')
-    print()
 
     # build truth table
     truth_table_h = ttg.Truths(atoms_for_conclusions, prop_expr, ints=False).as_pandas 
-    print("Truth-Table with h:")
-    print(truth_table_h)
-    print()
 
     argument_candidates_final = []
     for arguments in argument_candidates:
@@ -100,9 +88,6 @@ def create_arguments(file):
         if all(conclusion_truth_values):
             argument_candidates_final.append(arguments)
 
-    print("final arg candidates:")
-    print(*argument_candidates_final,sep='\n')
-    print()
 
     # 3. Find Pairs with H minimal
     arguments_final = []
@@ -135,11 +120,8 @@ def create_arguments(file):
             if minimal:
                 arguments_final.append([supp, conc])
             
-    #arguments_final = {value[0]: key for key, value in arguments_min.items()}
 
-
-
-    print("Final arguments:")
+    print(f"Final arguments:{file[10:17]}")
     print(*arguments_final,sep='\n')
     print() 
     return arguments_final
@@ -174,58 +156,3 @@ def create_argumentation_graph(af):
     return G
     
 
-# build arguments
-arguments = create_arguments("statement_v1.yml")
-
-
-# create dictionary with numbers for argument
-argument_dict = {}
-
-for j in range(len(arguments)):
-    key_j = 'arg{}'.format(j+1)  # a string depending on j
-    argument_dict[key_j] = arguments[j]
-
-print("argument names:")
-print(argument_dict)
-print()
-
-# add Arguments to Argumentation framework
-af = ArgumentationFramework()
-for argument in argument_dict.keys():
-    af.add_argument(argument)
-
-# create attacks and add them to argumentation framework
-create_attacks(arguments, af)
-print("direct defeater attacks:")
-print(af.attacks)
-
-#create argument_graph
-argumentation_graph = create_argumentation_graph(af)
-
-# Check if a set of arguments is conflict-free
-set_arg = {"arg1", "arg2"}
-if af.is_conflict_free(set_arg):
-    print()
-    print(f"{set_arg} is conflict free")
-else:
-    print()
-    print(f"{set_arg} is not conflict free")
-
-# Check if a set of arguments is admissible
-if af.is_admissible(set_arg):
-    print()
-    print(f"{set_arg} is admissible")
-else:
-    print()
-    print(f"{set_arg} is not admissible")
-
-#show argumentation graph
-fig = plt.figure()
-pos = nx.planar_layout(argumentation_graph)#, seed=42)
-nx.draw_networkx(argumentation_graph, pos, with_labels=True, node_size=3000, node_color='skyblue',
-                  font_size=20, arrowsize=30, label=str("\n".join([str(a) for a in argument_dict.items()])))
-plt.title("Argumentation Graph")
-plt.legend(loc='best',fontsize="10", markerscale=0)
-plt.savefig('Argumentation_Graph.png')
-plt.show()
-plt.close() 
