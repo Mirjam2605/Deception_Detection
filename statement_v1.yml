@@ -1,0 +1,15 @@
+statement 1: "a"
+
+statement 2: "a => b"
+
+statement 3: "c => not b"
+
+statement 4: "c"
+
+statement 5: "d"
+
+statement 6: "d => b"
+
+statement 7: "not a"
+
+statement 8: "not c"

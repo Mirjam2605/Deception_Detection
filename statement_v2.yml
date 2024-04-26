@@ -1,0 +1,10 @@
+statement 1: "not c"
+
+statement 2: "c"
+
+statement 3: "a"
+
+statement 4: "(a and c) => not b"
+
+
+
