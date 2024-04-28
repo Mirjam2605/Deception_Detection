@@ -2,6 +2,7 @@ class ArgumentationFramework:
     def __init__(self):
         self.arguments = set()
         self.attacks = set()
+        self.trust = set()
 
     def add_argument(self, arg):
         self.arguments.add(arg)
@@ -9,6 +10,9 @@ class ArgumentationFramework:
     def add_attack(self, attacker, target):
         assert attacker in self.arguments and target in self.arguments, "Argument not in Argumentation Framework"
         self.attacks.add((attacker, target))
+    
+    def add_trust(self, arg, trust):
+        self.trust.add((arg, trust))
 
     def is_conflict_free(self, argument_set):
         # check if there are any attacks between set members

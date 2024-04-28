@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+from pyvis.network import Network
 
 from Argumentation_Builder import ArgumentationFramework
 import Argumentation_logic as arglog
@@ -12,39 +13,37 @@ arguments_p2 = arglog.create_arguments("statement_person2.yml")
 
 #build initial trust values
 trust_values = initial_trust_values("history_persons.yml")
+print("trust-values:")
 print(trust_values)
 
-#creating argument_dicts
+#creating argument_dicts and a big argument for overall arguments
 argument_dict_p1 = arglog.creating_argument_dict(arguments_p1, "p1")
 argument_dict_p2 = arglog.creating_argument_dict(arguments_p2, "p2")
-
 overall_arguments = {**argument_dict_p1, **argument_dict_p2}
 
-#test = list(overall_arguments.items())
-# print(test)
-# print(test[1])
-# print(test[1][1])
-# print(test[1][1][1])
-
-# for s in test:
-#     print (s[0])
-# print(len(test))
-
-#ToDO: Add Arguments with color depending on Person
 # add Arguments to Argumentation framework
 af = ArgumentationFramework()
 for argument in overall_arguments.keys():
     af.add_argument(argument)
 print(af.arguments)
 
+# add initial Trust Values to arguments
+for argument in overall_arguments.keys():
+     for p,trust in trust_values.items():
+         if argument[:2] == p:
+             af.add_trust(argument, trust)
+
+print("trust arguments:")
+print(af.trust)
 
 # create attacks and add them to argumentation framework
 arglog.create_attacks(list(overall_arguments.items()), af)
 print("direct defeater attacks:")
 print(af.attacks)
 
-#create argument_graph
-argumentation_graph, color_map = arglog.create_argumentation_graph(af)
+# idea: put all data in pandas dataframe (nodes,attacks,color,trust/weight) and visualize with pyviz
+# update trust of arguments by adding attack level based on number of attacks and weights of attacking nodes
+
 
 """
 # Check if a set of arguments is conflict-free
@@ -62,10 +61,13 @@ if af.is_admissible(set_arg):
     print(f"{set_arg} is admissible")
 else:
     print()
-    print(f"{set_arg} is not admissible")
-"""
+    print(f"{set_arg} is not admissible")"""
 
-#show argumentation graph
+
+#show argumentation graph with networkx
+#create argument_graph
+argumentation_graph, color_map = arglog.create_argumentation_graph(af)
+
 fig = plt.figure()
 pos = nx.planar_layout(argumentation_graph)#, seed=42)
 nx.draw_networkx(argumentation_graph, pos, with_labels=True, node_size=1000, node_color=color_map,
@@ -74,4 +76,10 @@ plt.title("Argumentation Graph")
 plt.legend(loc='best',fontsize="5", markerscale=0)
 plt.savefig('Argumentation_Graph.png')
 plt.show()
-plt.close()   
+plt.close() 
+
+# visualization with pyvis
+net = Network(notebook=True)
+net.add_nodes(af.arguments) #todo:assign colors based on person
+net.add_edges(af.attacks) #todo:assign trust as weights
+net.show("example.html")

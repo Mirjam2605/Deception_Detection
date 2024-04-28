@@ -169,12 +169,9 @@ def create_argumentation_graph(af):
     color_map = []
     for node in G:
         if "p1" in node :
-            color_map.append('blue')
+            color_map.append('lightblue')
         else: 
             color_map.append('green') 
-    # Erstelle ein neues Mapping, das die Knoten als "A1", "A2", "A3", ... benennt
-    #new_mapping = {node: f"A{idx}" for idx, node in enumerate(G.nodes(), start=1)}
-    #G = nx.relabel_nodes(G, new_mapping)
     return G, color_map
     
 
