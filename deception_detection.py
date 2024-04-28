@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from Argumentation_Builder import ArgumentationFramework
 import Argumentation_logic as arglog
-from Initial_Trust_Values import intitial_trust_values
+from Initial_Trust_Values import initial_trust_values
 
 
 # build arguments
@@ -11,37 +11,44 @@ arguments_p1 = arglog.create_arguments("statement_person1.yml")
 arguments_p2 = arglog.create_arguments("statement_person2.yml")
 
 #build initial trust values
-trust_values = intitial_trust_values("history_persons.yml")
+trust_values = initial_trust_values("history_persons.yml")
 print(trust_values)
 
-## ToDO: automate this for more than one person
-# create dictionary with numbers for argument
-argument_dict = {}
+#creating argument_dicts
+argument_dict_p1 = arglog.creating_argument_dict(arguments_p1, "p1")
+argument_dict_p2 = arglog.creating_argument_dict(arguments_p2, "p2")
 
-for j in range(len(arguments_p1)):
-    key_j = 'arg{}'.format(j+1)  # a string depending on j
-    argument_dict[key_j] = arguments_p1[j]
+overall_arguments = {**argument_dict_p1, **argument_dict_p2}
 
-print("argument names:")
-print(argument_dict)
-print()
+#test = list(overall_arguments.items())
+# print(test)
+# print(test[1])
+# print(test[1][1])
+# print(test[1][1][1])
+
+# for s in test:
+#     print (s[0])
+# print(len(test))
 
 #ToDO: Add Arguments with color depending on Person
 # add Arguments to Argumentation framework
 af = ArgumentationFramework()
-for argument in argument_dict.keys():
+for argument in overall_arguments.keys():
     af.add_argument(argument)
+print(af.arguments)
+
 
 # create attacks and add them to argumentation framework
-arglog.create_attacks(arguments_p1, af)
+arglog.create_attacks(list(overall_arguments.items()), af)
 print("direct defeater attacks:")
 print(af.attacks)
 
 #create argument_graph
-argumentation_graph = arglog.create_argumentation_graph(af)
+argumentation_graph, color_map = arglog.create_argumentation_graph(af)
 
+"""
 # Check if a set of arguments is conflict-free
-set_arg = {"arg1", "arg2"}
+set_arg = {"p1_arg1", "p1_arg2"}
 if af.is_conflict_free(set_arg):
     print()
     print(f"{set_arg} is conflict free")
@@ -56,14 +63,15 @@ if af.is_admissible(set_arg):
 else:
     print()
     print(f"{set_arg} is not admissible")
+"""
 
 #show argumentation graph
 fig = plt.figure()
 pos = nx.planar_layout(argumentation_graph)#, seed=42)
-nx.draw_networkx(argumentation_graph, pos, with_labels=True, node_size=3000, node_color='skyblue',
-                  font_size=20, arrowsize=30, label=str("\n".join([str(a) for a in argument_dict.items()])))
+nx.draw_networkx(argumentation_graph, pos, with_labels=True, node_size=1000, node_color=color_map,
+                  font_size=5, arrowsize=10, label=str("\n".join([str(a) for a in overall_arguments.items()])))
 plt.title("Argumentation Graph")
-plt.legend(loc='best',fontsize="10", markerscale=0)
+plt.legend(loc='best',fontsize="5", markerscale=0)
 plt.savefig('Argumentation_Graph.png')
 plt.show()
-plt.close() 
+plt.close()   

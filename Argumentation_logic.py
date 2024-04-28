@@ -126,20 +126,36 @@ def create_arguments(file):
     print() 
     return arguments_final
 
+# create dictionary with numbers for argument
+def creating_argument_dict(arguments, person):
+    argument_dict = {}
+
+    for j in range(len(arguments)):
+        key_j = person+'_arg{}'.format(j+1)  # a string depending on j
+        argument_dict[key_j] = arguments[j]
+
+    print(f"arguments {person}:")
+    print(argument_dict)
+    print()
+    return (argument_dict)
+  
 #find attacks between arguments
 def create_attacks(arguments, framework):
     #determine attacks: direct defeater (DD) attack function:
     #compare every conclusion with support of other elements, check if negation is in it
     for i in range(len(arguments)):
-        conclusion = arguments[i][1]
+        key1 = arguments[i][0]
+        conclusion = arguments[i][1][1]
         if conclusion.startswith('not'):
-            for j, support in enumerate(arguments):
-                if conclusion[4:] in support[0]:
-                    framework.add_attack(('arg{}'.format(i+1)), ('arg{}'.format(j+1))) 
+            for support in arguments:
+                key2 = support[0]
+                if conclusion[4:] in support[1][0]:
+                    framework.add_attack(key1, key2) 
         else:
-            for j, support in enumerate(arguments):
+            for support in arguments:
+                key2 = support[0]
                 if ("not "+conclusion) in support[0]:
-                    framework.add_attack(('arg{}'.format(i+1)), ('arg{}'.format(j+1)))
+                    framework.add_attack(key1, key2)
     #print("direct defeater attacks:")
     #print(framework.attacks)   
 
@@ -150,9 +166,15 @@ def create_argumentation_graph(af):
         G.add_node(argument)
     for attack in af.attacks:
         G.add_edge(attack[0], attack[1])
+    color_map = []
+    for node in G:
+        if "p1" in node :
+            color_map.append('blue')
+        else: 
+            color_map.append('green') 
     # Erstelle ein neues Mapping, das die Knoten als "A1", "A2", "A3", ... benennt
     #new_mapping = {node: f"A{idx}" for idx, node in enumerate(G.nodes(), start=1)}
     #G = nx.relabel_nodes(G, new_mapping)
-    return G
+    return G, color_map
     
 

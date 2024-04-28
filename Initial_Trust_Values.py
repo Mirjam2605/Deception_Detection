@@ -1,7 +1,7 @@
 import yaml
 import Argumentation_logic as arglog
 
-def intitial_trust_values(file_path):
+def initial_trust_values(file_path):
 
     with open(file_path, 'r') as file:
         history =yaml.safe_load(file)
