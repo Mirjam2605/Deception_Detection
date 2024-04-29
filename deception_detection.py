@@ -103,7 +103,7 @@ got_data = attacks_df
 sources = got_data["attacker"]
 targets = got_data["target"]
 #weights = got_data["weight"]
-print(sources)
+
 edge_data = zip(sources, targets)#, weights)
 
 got_net.add_nodes(arguments_df["argument"],title=arguments_df["argument"],color=arguments_df["color"],value=arguments_df["trust"])
@@ -111,10 +111,12 @@ for e in edge_data:
     src = e[0]
     dst = e[1]
     #w = e[2]
-    #print(src)
-    #got_net.add_node(src, src, title=src)
-    #got_net.add_node(dst, dst, title=dst)
+
     got_net.add_edge(src, dst)#, value=w)
 
+# add trust data to node hover data
+for node in got_net.nodes:
+                node["title"] += ", Trust:" + str(node["value"])
+                
 got_net.show("network.html")
 print(got_net.get_nodes())
