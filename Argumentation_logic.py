@@ -121,9 +121,9 @@ def create_arguments(file):
                 arguments_final.append([supp, conc])
             
 
-    print(f"Final arguments:{file[10:17]}")
-    print(*arguments_final,sep='\n')
-    print() 
+    #print(f"Final arguments:{file[10:17]}")
+    #print(*arguments_final,sep='\n')
+    #print() 
     return arguments_final
 
 # create dictionary with numbers for argument

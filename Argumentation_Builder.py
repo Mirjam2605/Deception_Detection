@@ -11,8 +11,8 @@ class ArgumentationFramework:
         assert attacker in self.arguments and target in self.arguments, "Argument not in Argumentation Framework"
         self.attacks.add((attacker, target))
     
-    def add_trust(self, arg, trust):
-        self.trust.add((arg, trust))
+    def add_trust(self, arg, trust, c):
+        self.trust.add((arg, trust, c))
 
     def is_conflict_free(self, argument_set):
         # check if there are any attacks between set members
