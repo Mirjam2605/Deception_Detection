@@ -70,22 +70,7 @@ if af.is_admissible(set_arg):
     print(f"{set_arg} is admissible")
 else:
     print()
-    print(f"{set_arg} is not admissible")
-
-
-#show argumentation graph with networkx
-#create argument_graph
-argumentation_graph, color_map = arglog.create_argumentation_graph(af)
-
-fig = plt.figure()
-pos = nx.planar_layout(argumentation_graph)#, seed=42)
-nx.draw_networkx(argumentation_graph, pos, with_labels=True, node_size=1000, node_color=color_map,
-                  font_size=5, arrowsize=10, label=str("\n".join([str(a) for a in overall_arguments.items()])))
-plt.title("Argumentation Graph")
-plt.legend(loc='best',fontsize="5", markerscale=0)
-plt.savefig('Argumentation_Graph.png')
-plt.show()
-plt.close() """
+    print(f"{set_arg} is not admissible")"""
 
 # visualization with pyvis
 got_net = Network(

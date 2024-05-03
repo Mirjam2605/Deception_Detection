@@ -159,19 +159,5 @@ def create_attacks(arguments, framework):
     #print("direct defeater attacks:")
     #print(framework.attacks)   
 
-#Better with defining attack function before?
-def create_argumentation_graph(af):
-    G = nx.MultiDiGraph()
-    for argument in af.arguments:
-        G.add_node(argument)
-    for attack in af.attacks:
-        G.add_edge(attack[0], attack[1])
-    color_map = []
-    for node in G:
-        if "p1" in node :
-            color_map.append('lightblue')
-        else: 
-            color_map.append('green') 
-    return G, color_map
     
 
