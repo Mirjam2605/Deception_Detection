@@ -2,6 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from pyvis.network import Network
 import pandas as pd
+import numpy as np
 
 from Argumentation_Builder import ArgumentationFramework
 import Argumentation_logic as arglog
@@ -32,11 +33,11 @@ for argument in overall_arguments.keys():
 #print(af.arguments)
 
 # add initial Trust Values to arguments
-for argument in overall_arguments.keys():
+for (argument, content) in overall_arguments.items():
      for i, (p, trust) in enumerate(trust_values.items()):
          c = color[i]
          if argument[:2] == p:
-             af.add_trust(argument, trust,c)
+             af.add_trust(argument, trust, str(content[0]), content[1], c)
 
 #print("trust arguments:")
 #print(af.trust)
@@ -48,29 +49,11 @@ arglog.create_attacks(list(overall_arguments.items()), af)
 
 # idea: put all data in pandas dataframe (nodes,attacks,color,trust/weight) and visualize with pyviz
 # update trust of arguments by adding attack level based on number of attacks and weights of attacking nodes
-arguments_df = pd.DataFrame(af.trust,columns=['argument', 'trust', 'color'])
+arguments_df = pd.DataFrame(af.trust,columns=['argument', 'trust', 'support', 'conclusion', 'color'])
 print(arguments_df)
 
 attacks_df =pd.DataFrame(af.attacks,columns=['attacker', 'target'])
 print(attacks_df)
-
-"""
-# Check if a set of arguments is conflict-free
-set_arg = {"p1_arg1", "p1_arg2"}
-if af.is_conflict_free(set_arg):
-    print()
-    print(f"{set_arg} is conflict free")
-else:
-    print()
-    print(f"{set_arg} is not conflict free")
-
-# Check if a set of arguments is admissible
-if af.is_admissible(set_arg):
-    print()
-    print(f"{set_arg} is admissible")
-else:
-    print()
-    print(f"{set_arg} is not admissible")"""
 
 # visualization with pyvis
 got_net = Network(
@@ -104,4 +87,61 @@ for node in got_net.nodes:
                 node["title"] += ", Trust:" + str(node["value"])
                 
 got_net.show("network.html")
-print(got_net.get_nodes())
+argument_nodes = got_net.get_nodes()
+
+
+
+# Evaluate Belief of Arguments in Argumentation Framework based on evidence theory or Dempster–Shafer theory (DST)
+
+eminus_H = {}
+eplus_H = {}
+for argument in arguments_df["argument"]:
+    # Find for every argument: attackers
+    arg_attack = attacks_df.loc[attacks_df['target'] == argument]
+    if not arg_attack.empty:
+        # get all trust values of attackers
+        evidence_minus = []
+        for attacker in arg_attack["attacker"]:
+            trust = arguments_df[(arguments_df == attacker).any(axis=1)]["trust"]
+            trust = trust.item()
+            evidence_minus.append(1-trust)
+    #compute evidence against argument by dempster shafer
+        bel_H_minus = 1 - np.prod(evidence_minus)
+    else:
+        bel_H_minus = 0 # zero if no attacks = no evidence against hypothesis
+    eminus_H[argument] = bel_H_minus
+
+    # Find supporters for every argument: Same argument from different person
+    supp_arg = arguments_df[(arguments_df == argument).any(axis=1)]["support"].item()
+    conc_arg = arguments_df[(arguments_df == argument).any(axis=1)]["conclusion"].item()
+    # check if conclusion and support is same for other arguments
+    supporters_candidates = arguments_df.loc[arguments_df['support'] == supp_arg]
+    supporters = supporters_candidates.loc[supporters_candidates['conclusion'] == conc_arg]
+
+    evidence_plus = []
+    # find truth values of supporters, argument/hypothesis always supports its own 
+    for index, row in supporters.iterrows():
+        trust = row["trust"]
+        evidence_plus.append(1-trust)
+        #compute evidence for argument by dempster shafer
+    bel_H_plus = 1 - np.prod(evidence_plus)
+    eplus_H[argument] = bel_H_plus
+    # Calculating belief intervall for argument based on Dempster and Shafer
+    if bel_H_minus == 1 and bel_H_plus == 1: # no evidence for or against a hypothesis
+         pro_H = 0
+         con_H = 0
+
+    else:
+        pro_H = (bel_H_plus*(1-bel_H_minus)) / (1-bel_H_plus*bel_H_minus)
+        con_H = (bel_H_minus*(1-bel_H_plus)) / (1-bel_H_plus*bel_H_minus)
+
+        # only one hypothesis in focus
+        bel_H = pro_H   # degree of belief (lower boundary)
+        pl = 1 - con_H  # plausibility (upper boundary)
+    print(argument, bel_H, pl)
+
+
+# Todo: Take belief or plausibility or mean (try different parameters) and iterate over the whole algorithm until convergence
+
+                
+                   
