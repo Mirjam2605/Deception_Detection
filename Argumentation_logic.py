@@ -17,10 +17,7 @@ def powerset(iterable):
     return chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1))
 
 def create_arguments(file):
-    # Load your YAML data (replace 'your_yaml_file.yaml' with your actual file)
-    yaml_data = load_yaml(file)
-
-    statements = list(yaml_data.values())
+    statements = file
     prop_expr = []
     atoms = []
 

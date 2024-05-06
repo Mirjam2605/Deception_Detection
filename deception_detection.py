@@ -7,11 +7,20 @@ import numpy as np
 from Argumentation_Builder import ArgumentationFramework
 import Argumentation_logic as arglog
 from Initial_Trust_Values import initial_trust_values
+from natlang_to_logic import to_logical_form
 
 
 # build arguments from persons statements
-arguments_p1 = arglog.create_arguments("statement_person1.yml")
-arguments_p2 = arglog.create_arguments("statement_person2.yml")
+arguments_Norby_yaml = arglog.load_yaml("statement_Norby.yml")
+arguments_mre_yaml = arglog.load_yaml("statement_mrE.yml")
+
+arguments_Norby_log, statement_map, negations = to_logical_form(arguments_Norby_yaml)
+arguments_mre_log, statement_map, negations = to_logical_form(arguments_mre_yaml, statement_map, negations)
+print(arguments_Norby_log, arguments_mre_log)
+
+arguments_Norby = arglog.create_arguments(arguments_Norby_log)
+arguments_mre = arglog.create_arguments(arguments_mre_log)
+print(arguments_Norby, arguments_mre)
 
 #define as many colors as persons
 color = ['green', 'lightblue']
@@ -22,15 +31,15 @@ trust_values = initial_trust_values("history_persons.yml")
 #print(trust_values)
 
 #creating argument_dicts and a big argument for overall arguments
-argument_dict_p1 = arglog.creating_argument_dict(arguments_p1, "p1")
-argument_dict_p2 = arglog.creating_argument_dict(arguments_p2, "p2")
+argument_dict_p1 = arglog.creating_argument_dict(arguments_Norby, "p1")
+argument_dict_p2 = arglog.creating_argument_dict(arguments_mre, "p2")
 overall_arguments = {**argument_dict_p1, **argument_dict_p2}
 
 # add Arguments to Argumentation framework
 af = ArgumentationFramework()
 for argument in overall_arguments.keys():
     af.add_argument(argument)
-#print(af.arguments)
+# print(af.arguments)
 
 # add initial Trust Values to arguments
 for (argument, content) in overall_arguments.items():
@@ -39,8 +48,8 @@ for (argument, content) in overall_arguments.items():
          if argument[:2] == p:
              af.add_trust(argument, trust, str(content[0]), content[1], c)
 
-#print("trust arguments:")
-#print(af.trust)
+# print("trust arguments:")
+# print(af.trust)
 
 # create attacks and add them to argumentation framework
 arglog.create_attacks(list(overall_arguments.items()), af)
@@ -73,6 +82,7 @@ targets = got_data["target"]
 #weights = got_data["weight"]
 
 edge_data = zip(sources, targets)#, weights)
+print(edge_data)
 
 got_net.add_nodes(arguments_df["argument"],title=arguments_df["argument"],color=arguments_df["color"],value=arguments_df["trust"])
 for e in edge_data:
