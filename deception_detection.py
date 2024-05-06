@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from pyvis.network import Network
 import pandas as pd
 import numpy as np
+from scipy.special import logit, expit
 
 from Argumentation_Builder import ArgumentationFramework
 import Argumentation_logic as arglog
@@ -101,56 +102,134 @@ argument_nodes = got_net.get_nodes()
 
 
 
-# Evaluate Belief of Arguments in Argumentation Framework based on evidence theory or Dempster–Shafer theory (DST)
 
-eminus_H = {}
-eplus_H = {}
+## Algorithm trust model
+updates = {}
+new_trust_list = []
+# Map Probabilities into Logits
 for argument in arguments_df["argument"]:
-    # Find for every argument: attackers
-    arg_attack = attacks_df.loc[attacks_df['target'] == argument]
-    if not arg_attack.empty:
-        # get all trust values of attackers
-        evidence_minus = []
-        for attacker in arg_attack["attacker"]:
-            trust = arguments_df[(arguments_df == attacker).any(axis=1)]["trust"]
-            trust = trust.item()
-            evidence_minus.append(1-trust)
-    #compute evidence against argument by dempster shafer
-        bel_H_minus = 1 - np.prod(evidence_minus)
-    else:
-        bel_H_minus = 0 # zero if no attacks = no evidence against hypothesis
-    eminus_H[argument] = bel_H_minus
+    current_trust = arguments_df[(arguments_df == argument).any(axis=1)]["trust"].item()
+    new_trust = logit(current_trust)
+    arguments_df.loc[arguments_df['argument'] == argument, 'trust'] = new_trust
+    new_trust_list.append((0, new_trust))
+    # set update for all arguments to zero in a dictionary
+    updates["{}".format(argument)] = 0
 
-    # Find supporters for every argument: Same argument from different person
-    supp_arg = arguments_df[(arguments_df == argument).any(axis=1)]["support"].item()
-    conc_arg = arguments_df[(arguments_df == argument).any(axis=1)]["conclusion"].item()
-    # check if conclusion and support is same for other arguments
-    supporters_candidates = arguments_df.loc[arguments_df['support'] == supp_arg]
-    supporters = supporters_candidates.loc[supporters_candidates['conclusion'] == conc_arg]
+# set hyperparameters
+lambda_att = 0.8
+lambda_def = 0.2
+threshold = 0.1
+it = 1
+iterations = 100
 
-    evidence_plus = []
-    # find truth values of supporters, argument/hypothesis always supports its own 
-    for index, row in supporters.iterrows():
-        trust = row["trust"]
-        evidence_plus.append(1-trust)
-        #compute evidence for argument by dempster shafer
-    bel_H_plus = 1 - np.prod(evidence_plus)
-    eplus_H[argument] = bel_H_plus
-    # Calculating belief intervall for argument based on Dempster and Shafer
-    if bel_H_minus == 1 and bel_H_plus == 1: # no evidence for or against a hypothesis
-         pro_H = 0
-         con_H = 0
+new_trust_list = []
+while it <= iterations:
+    # iterate over attacks and changing update value with logits and e function
+    for i in range(len(attacks_df)):
+        attacker = attacks_df.loc[i, "attacker"]
+        target = attacks_df.loc[i, "target"]
+        # get trust values for attacker and targets
+        trust_att = arguments_df[(arguments_df == attacker).any(axis=1)]["trust"].item()
+        trust_tar = arguments_df[(arguments_df == target).any(axis=1)]["trust"].item()
+        # attack
+        updates[target] = updates[target] + lambda_att * -np.exp(trust_att-trust_tar)
+        # defense
+        updates[attacker] = updates[attacker] + lambda_def * -np.exp(trust_tar-trust_att)
 
-    else:
-        pro_H = (bel_H_plus*(1-bel_H_minus)) / (1-bel_H_plus*bel_H_minus)
-        con_H = (bel_H_minus*(1-bel_H_plus)) / (1-bel_H_plus*bel_H_minus)
+    # update trust value with update value
+    for argument in arguments_df["argument"]:
+        current_trust = arguments_df[(arguments_df == argument).any(axis=1)]["trust"].item()
+        new_trust = current_trust + updates[argument]
+        arguments_df.loc[arguments_df['argument'] == argument, 'trust'] = new_trust   
+        new_trust_list.append((it, expit(new_trust)))
+    it += 1
 
-        # only one hypothesis in focus
-        bel_H = pro_H   # degree of belief (lower boundary)
-        pl = 1 - con_H  # plausibility (upper boundary)
-    print(argument, bel_H, pl)
+# change logits back into probabilities
+for argument in arguments_df["argument"]:
+    current_trust = arguments_df[(arguments_df == argument).any(axis=1)]["trust"].item()
+    new_trust = expit(current_trust)
+    arguments_df.loc[arguments_df['argument'] == argument, 'trust'] = new_trust
+
+print("Number of iterations: ", it-1)
+print(arguments_df)
+
+# plot convergence of trust values
+plt.scatter(*zip(*new_trust_list), marker='.', s=3)
+plt.show()
 
 
+
+
+# Evaluate Belief of Arguments in Argumentation Framework based on evidence theory or Dempster–Shafer theory (DST)
+# set number of iterations
+""" iteration = 10
+while i < iteration:
+    eminus_H = {}
+    eplus_H = {}
+    change = 0
+    for argument in arguments_df["argument"]:
+        # save current trust value
+        current_trust = arguments_df[(arguments_df == argument).any(axis=1)]["trust"].item()
+        # Find for every argument: attackers
+        arg_attack = attacks_df.loc[attacks_df['target'] == argument]
+        if not arg_attack.empty:
+            # get all trust values of attackers
+            evidence_minus = []
+            for attacker in arg_attack["attacker"]:
+                trust = arguments_df[(arguments_df == attacker).any(axis=1)]["trust"]
+                trust = trust.item()
+                evidence_minus.append(1-trust)
+        #compute evidence against argument by dempster shafer
+            bel_H_minus = 1 - np.prod(evidence_minus)
+        else:
+            bel_H_minus = 0 # zero if no attacks = no evidence against hypothesis
+        eminus_H[argument] = bel_H_minus
+
+        # Find supporters for every argument: Same argument from different person
+        supp_arg = arguments_df[(arguments_df == argument).any(axis=1)]["support"].item()
+        conc_arg = arguments_df[(arguments_df == argument).any(axis=1)]["conclusion"].item()
+        # check if conclusion and support is same for other arguments
+        supporters_candidates = arguments_df.loc[arguments_df['support'] == supp_arg]
+        supporters = supporters_candidates.loc[supporters_candidates['conclusion'] == conc_arg]
+
+        evidence_plus = []
+        # find truth values of supporters, argument/hypothesis always supports its own 
+        for index, row in supporters.iterrows():
+            trust = row["trust"]
+            evidence_plus.append(1-trust)
+            #compute evidence for argument by dempster shafer
+        bel_H_plus = 1 - np.prod(evidence_plus)
+        eplus_H[argument] = bel_H_plus
+        # Calculating belief intervall for argument based on Dempster and Shafer
+        if bel_H_minus == 1 and bel_H_plus == 1: # no evidence for or against a hypothesis
+            pro_H = 0
+            con_H = 0
+
+        else:
+            pro_H = (bel_H_plus*(1-bel_H_minus)) / (1-bel_H_plus*bel_H_minus)
+            con_H = (bel_H_minus*(1-bel_H_plus)) / (1-bel_H_plus*bel_H_minus)
+
+            # only one hypothesis in focus
+            bel_H = pro_H   # degree of belief (lower boundary)
+            pl = 1 - con_H  # plausibility (upper boundary)
+        
+        # take degree of belief as new trust value
+        new_trust = bel_H
+        print("updated Trust:")
+        print(argument, current_trust, new_trust)
+        # check if convergence
+        change += abs(new_trust-current_trust)
+        
+        # update trust value in dataframe
+        arguments_df.loc[arguments_df['argument'] == argument, 'trust'] = new_trust
+    threshold = 0.1
+    print("change: ", change)
+    print()
+    if change < threshold:
+        break
+    i += 1
+print("iterations: ", i)
+print(arguments_df) """
 # Todo: Take belief or plausibility or mean (try different parameters) and iterate over the whole algorithm until convergence
 
                 
