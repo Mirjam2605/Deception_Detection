@@ -1,11 +1,12 @@
-p1:
-  Masters in Business: 1
-  Working for company 10 years without incident: 1
-  Sometimes forgetful: 0
-  Not known by the police before: 1
-
-p2:
+Norby:
   No job: 0
   Wife and Children: 1
   Sometimes forgetful: 0
-  Known by the police before: 1
+  Not known by the police before: 1
+  Installs malicious software: 0
+
+mrE:
+  Job: 1
+  Wife and Children: 1
+  Known by the police before: 0
+  Photographer: 0
