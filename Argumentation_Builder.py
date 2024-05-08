@@ -2,6 +2,7 @@ class ArgumentationFramework:
     def __init__(self):
         self.arguments = set()
         self.attacks = set()
+        self.agreement = set()
         self.trust = set()
 
     def add_argument(self, arg):
@@ -10,6 +11,10 @@ class ArgumentationFramework:
     def add_attack(self, attacker, target):
         assert attacker in self.arguments and target in self.arguments, "Argument not in Argumentation Framework"
         self.attacks.add((attacker, target))
+    
+    def add_agreement(self, supporter, supported):
+        assert supporter in self.arguments and supported in self.arguments, "Argument not in Argumentation Framework"
+        self.agreement.add((supporter, supported))
     
     def add_trust(self, arg, trust, supp, con,  c):
         self.trust.add((arg, trust, supp, con, c))

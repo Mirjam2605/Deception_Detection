@@ -2,6 +2,7 @@ import yaml
 import ttg
 from itertools import chain, combinations
 import networkx as nx
+from pyvis.network import Network
 
 
 
@@ -136,7 +137,7 @@ def creating_argument_dict(arguments, person):
     print()
     return (argument_dict)
   
-#find attacks between arguments
+# find attacks between arguments
 def create_attacks(arguments, framework):
     #determine attacks: direct defeater (DD) attack function:
     #compare every conclusion with support of other elements, check if negation is in it
@@ -156,5 +157,63 @@ def create_attacks(arguments, framework):
     #print("direct defeater attacks:")
     #print(framework.attacks)   
 
-    
+# find supports between the arguments   
+def create_agreement(arguments, framework):
+    #determine attacks: direct defeater (DD) attack function:
+    #compare every conclusion with support of other elements, check if negation is in it
+    for i in range(len(arguments)):
+        key1 = arguments[i][0] # name argument 1
+        conclusion1 = arguments[i][1][1] # conclusion argument 1
+        for j in range(len(arguments)):
+            key2 = arguments[j][0] # name argument 2
+            conclusion2 = arguments[j][1][1] # conclusion argument 2
+            if conclusion1 == conclusion2 and key1 != key2:
+                framework.add_agreement(key1, key2) 
 
+def create_network(arguments_df, attacks_df, agreement_df, name):
+    # initial visualization with pyvis
+    got_net = Network(
+        notebook=True,
+        cdn_resources="remote",
+        bgcolor="white",
+        font_color="black",
+        directed =True,
+    )
+
+    # set the physics layout of the network
+    got_net.repulsion()
+
+    #attack_data = attacks_df
+    sources_att = attacks_df["attacker"]
+    targets_att = attacks_df["target"]
+
+    sources_agree = agreement_df["supporter"]
+    targets_agree = agreement_df["supported"]
+
+    edge_data_attacks = zip(sources_att, targets_att)#, weights)
+    edge_data_agree = zip(sources_agree, targets_agree)#, weights)
+
+    got_net.add_nodes(arguments_df["argument"],title=arguments_df["argument"],color=arguments_df["color"],value=arguments_df["trust"])
+
+    # add attack edges
+    for e in edge_data_attacks:
+        src = e[0]
+        dst = e[1]
+        #w = e[2]
+
+        got_net.add_edge(src, dst, color="red")#, value=w)
+
+    # add agreement edges
+    for e in edge_data_agree:
+        src = e[0]
+        dst = e[1]
+        #w = e[2]
+
+        got_net.add_edge(src, dst, color="green")#, value=w)
+
+    # add trust data to node hover data
+    for node in got_net.nodes:
+                    node["title"] += ", Trust:" + str(node["value"])
+                    
+    got_net.show("{}.html".format(name))
+    #argument_nodes = got_net.get_nodes()
