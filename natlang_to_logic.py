@@ -1,11 +1,12 @@
 import spacy
+import string
 
-def to_logical_form(text, statement_map=None, negations=None):
+def to_logical_form(text, statement_map=None, negations=None, current_label=None):
     # Load the English NLP model
     nlp = spacy.load("en_core_web_sm")
     doc = nlp(text)
 
-    logical_connectors = ["so", "therefore", "thus", "hence", "as a result", "due to", "consequently"]
+    logical_connectors = [" so ", "therefore", "thus", "hence", "as a result", "due to", "consequently"]
 
     # Create statement map and negation if not passed in function.
     if statement_map is None:
@@ -13,7 +14,8 @@ def to_logical_form(text, statement_map=None, negations=None):
     if negations is None:
         negations = {}
 
-    current_label = 97  # start with letter 'a' for statements
+    if current_label is None:
+        current_label = 0 # start with letter a
 
     # results
     logical_forms = []
@@ -35,7 +37,7 @@ def to_logical_form(text, statement_map=None, negations=None):
                                                token.pos_ != 'PUNCT' and token.dep_ != 'neg']).strip().lower()
 
                     if part_base_sent not in statement_map:
-                        statement_map[part_base_sent] = chr(current_label)
+                        statement_map[part_base_sent] = string.ascii_lowercase[current_label]
                         current_label += 1
 
                     part_label = statement_map[part_base_sent]
@@ -61,13 +63,15 @@ def to_logical_form(text, statement_map=None, negations=None):
                 [token.text for token in sent if token.pos_ != 'PUNCT' and token.dep_ != 'neg']).strip().lower()
 
             if base_sent not in statement_map:
-                statement_map[base_sent] = chr(current_label)
+                print(current_label)
+                statement_map[base_sent] = string.ascii_lowercase[current_label]
                 current_label += 1
 
             base_label = statement_map[base_sent]
             negations[base_label] = negation
+            print(connector_found, base_sent, base_label, statement_map[base_sent])
 
             logical_form = f"not {base_label}" if negation else base_label
             logical_forms.append(logical_form)
 
-    return logical_forms, statement_map, negations
+    return logical_forms, statement_map, negations, current_label
