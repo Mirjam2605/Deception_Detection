@@ -13,17 +13,21 @@ from natlang_to_logic import to_logical_form
 # build arguments from persons statements
 arguments_Norby_yaml = arglog.load_yaml("statement_Norby.yml")
 arguments_mre_yaml = arglog.load_yaml("statement_mrE.yml")
+arguments_Yob_yaml = arglog.load_yaml("statement_Yob.yml")
 
-arguments_Norby_log, statement_map, negations = to_logical_form(arguments_Norby_yaml)
-arguments_mre_log, statement_map, negations = to_logical_form(arguments_mre_yaml, statement_map, negations)
-print(arguments_Norby_log, arguments_mre_log)
+arguments_Norby_log, statement_map, negations, current_label = to_logical_form(arguments_Norby_yaml)
+print("mrE")
+arguments_mre_log, statement_map, negations, current_label = to_logical_form(arguments_mre_yaml, statement_map, negations, current_label)
+arguments_yob_log, statement_map, negations, current_label = to_logical_form(arguments_Yob_yaml, statement_map, negations, current_label)
+print(arguments_Norby_log, arguments_mre_log, arguments_yob_log)
 
 arguments_Norby = arglog.create_arguments(arguments_Norby_log)
 arguments_mre = arglog.create_arguments(arguments_mre_log)
-print(arguments_Norby, arguments_mre)
+arguments_yob = arglog.create_arguments(arguments_yob_log)
+print(arguments_Norby, arguments_mre, arguments_yob)
 
 #define as many colors as persons
-color = ['green', 'lightblue']
+color = ['green', 'lightblue', 'orange']
 
 #build initial trust values
 trust_values = initial_trust_values("history_persons.yml")
@@ -33,7 +37,8 @@ trust_values = initial_trust_values("history_persons.yml")
 #creating argument_dicts and a big argument for overall arguments
 argument_dict_p1 = arglog.creating_argument_dict(arguments_Norby, "p1")
 argument_dict_p2 = arglog.creating_argument_dict(arguments_mre, "p2")
-overall_arguments = {**argument_dict_p1, **argument_dict_p2}
+argument_dict_p3 = arglog.creating_argument_dict(arguments_yob, "p3")
+overall_arguments = {**argument_dict_p1, **argument_dict_p2, **argument_dict_p3}
 
 # add Arguments to Argumentation framework
 af = ArgumentationFramework()
