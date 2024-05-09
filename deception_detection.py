@@ -9,6 +9,8 @@ import Argumentation_logic as arglog
 from Initial_Trust_Values import initial_trust_values
 from natlang_to_logic import to_logical_form
 
+import warnings
+warnings.filterwarnings("ignore")
 
 # build arguments from persons statements
 arguments_Norby_yaml = arglog.load_yaml("statement_Norby.yml")
@@ -79,10 +81,9 @@ updates_agree = {}
 new_trust_list = []
 
 # set hyperparameters
-lambda_att = 0.8
-lambda_def = 0.2
-lambda_supp = 0.8
-lambda_supper = 0.2
+lambda_att = 0.008
+lambda_def = 0.002
+lambda_supp = 0.008
 threshold = 0.1
 it = 1
 iterations = 1000
@@ -94,7 +95,7 @@ for argument in arguments_df["argument"]:
     arguments_df.loc[arguments_df['argument'] == argument, 'trust'] = new_trust
     new_trust_list.append((0, new_trust))
  
-
+history= {a: [] for a in arguments_df["argument"]}
 while it <= iterations:
     # set update for all arguments to zero in a dictionary
     for argument in arguments_df["argument"]:
@@ -123,16 +124,25 @@ while it <= iterations:
 
         # supported
         updates_agree[supported] = updates_agree[supported] + lambda_supp * (np.exp(trust_supper-trust_supp))
-        # defense: dont need that because relation is binary
+        # defense: not needed because relation is binary
         #updates_agree[supporter] = updates_agree[supporter] + lambda_supper * (np.exp(trust_supp-trust_supper))
 
     # update trust value with update values
     for argument in arguments_df["argument"]:
         current_trust = arguments_df[(arguments_df == argument).any(axis=1)]["trust"].item()
         new_trust = current_trust + updates_att[argument] + updates_agree[argument]
+        # boundary for logit value (specific precision enough)
+        if new_trust > 15:
+            new_trust = 15
+        if new_trust < -15:
+            new_trust = -15
+        
         arguments_df.loc[arguments_df['argument'] == argument, 'trust'] = new_trust   
         new_trust_list.append((it, expit(new_trust)))
     it += 1
+
+    for argument in arguments_df["argument"]:
+        history[argument].append(expit(arguments_df.loc[arguments_df['argument'] == argument, 'trust']))
 
 # change logits back into probabilities
 for argument in arguments_df["argument"]:
@@ -144,10 +154,15 @@ print("Number of iterations: ", it-1)
 print(arguments_df)
 
 # plot convergence of trust values
-plt.scatter(*zip(*new_trust_list), marker='.', s=3)
-plt.show()
+#plt.scatter(*zip(*new_trust_list), marker='.', s=3)
+#plt.show()
 
 # save final Graph
 arglog.create_network(arguments_df, attacks_df, agreement_df, "final_trust_network")
                 
                    
+for k,v in history.items():
+    plt.plot(v)
+plt.title("Argument Trust Convergence")
+plt.savefig('Argument_trust_convergence.png')
+plt.show()
