@@ -16,7 +16,6 @@ arguments_mre_yaml = arglog.load_yaml("statement_mrE.yml")
 arguments_Yob_yaml = arglog.load_yaml("statement_Yob.yml")
 
 arguments_Norby_log, statement_map, negations, current_label = to_logical_form(arguments_Norby_yaml)
-print("mrE")
 arguments_mre_log, statement_map, negations, current_label = to_logical_form(arguments_mre_yaml, statement_map, negations, current_label)
 arguments_yob_log, statement_map, negations, current_label = to_logical_form(arguments_Yob_yaml, statement_map, negations, current_label)
 print(arguments_Norby_log, arguments_mre_log, arguments_yob_log)
