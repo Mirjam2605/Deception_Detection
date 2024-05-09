@@ -63,13 +63,11 @@ def to_logical_form(text, statement_map=None, negations=None, current_label=None
                 [token.text for token in sent if token.pos_ != 'PUNCT' and token.dep_ != 'neg']).strip().lower()
 
             if base_sent not in statement_map:
-                print(current_label)
                 statement_map[base_sent] = string.ascii_lowercase[current_label]
                 current_label += 1
 
             base_label = statement_map[base_sent]
             negations[base_label] = negation
-            print(connector_found, base_sent, base_label, statement_map[base_sent])
 
             logical_form = f"not {base_label}" if negation else base_label
             logical_forms.append(logical_form)
