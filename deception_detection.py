@@ -32,8 +32,9 @@ color = ['green', 'lightblue', 'orange']
 
 #build initial trust values
 trust_values = initial_trust_values("history_persons.yml")
-#print("trust-values:")
-#print(trust_values)
+#trust_values = {'p1': 0.3, 'p2': 0.3, 'p3': 0.3}
+print("trust-values:")
+print(trust_values)
 
 #creating argument_dicts and a big argument for overall arguments
 argument_dict_p1 = arglog.creating_argument_dict(arguments_Norby, "p1")
@@ -72,7 +73,6 @@ print(agreement_df)
 
 # save initial Graph
 arglog.create_network(arguments_df, attacks_df, agreement_df, "initial_trust_network")
-
 ## Algorithm trust model
 
 updates_att = {}
@@ -84,7 +84,7 @@ lambda_att = 0.008
 lambda_def = 0.002
 lambda_supp = 0.008
 threshold = 0.1
-it = 1
+it = 1 
 iterations = 1000
 
 # Map Probabilities into Logits
@@ -128,6 +128,8 @@ while it <= iterations:
 
     # update trust value with update values
     for argument in arguments_df["argument"]:
+        #print("updates iteration {}, argument {}:".format(it, argument))
+        #print(updates_att[argument] + updates_agree[argument])
         current_trust = arguments_df[(arguments_df == argument).any(axis=1)]["trust"].item()
         new_trust = current_trust + updates_att[argument] + updates_agree[argument]
         # boundary for logit value (specific precision enough)
@@ -135,7 +137,7 @@ while it <= iterations:
             new_trust = 15
         if new_trust < -15:
             new_trust = -15
-        
+        #print("new trust argument {}: {}".format(argument, new_trust))
         arguments_df.loc[arguments_df['argument'] == argument, 'trust'] = new_trust   
         new_trust_list.append((it, expit(new_trust)))
     it += 1
@@ -152,16 +154,31 @@ for argument in arguments_df["argument"]:
 print("Number of iterations: ", it-1)
 print(arguments_df)
 
+trustable = {}
+untrustable = {}
+# determine trustable arguments
+for argument in arguments_df["argument"]:
+    trust = arguments_df[(arguments_df == argument).any(axis=1)]["trust"].item()
+    if trust > 0.5:
+        trustable[argument] = trust
+    else:
+        untrustable[argument] = trust
+
+print("trustworthy arguments:")
+print(trustable)
+print("untrustworthy arguments:")
+print(untrustable)
 # plot convergence of trust values
 #plt.scatter(*zip(*new_trust_list), marker='.', s=3)
 #plt.show()
 
 # save final Graph
 arglog.create_network(arguments_df, attacks_df, agreement_df, "final_trust_network")
-                
+             
                    
 for k,v in history.items():
-    plt.plot(v)
+    plt.plot(v, label=k)
+plt.legend(bbox_to_anchor=(1.02, 1),loc="upper left")
 plt.title("Argument Trust Convergence")
 plt.savefig('Argument_trust_convergence.png')
 plt.show()
